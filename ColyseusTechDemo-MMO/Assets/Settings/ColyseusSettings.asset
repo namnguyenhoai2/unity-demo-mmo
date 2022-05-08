@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: abda5a440b0b5634b8654ff3a0129b80, type: 3}
   m_Name: ColyseusSettings
   m_EditorClassIdentifier: 
-  colyseusServerAddress: rhhbag.us-west-1.colyseus.dev
-  colyseusServerPort: 443
+  colyseusServerAddress: localhost
+  colyseusServerPort: 2567
   useSecureProtocol: 1
   _requestHeaders:
   - name: Content-Type

@@ -135,12 +135,18 @@ public class CreateUserMenu : MonoBehaviour
     /// <param name="buttonObject"></param>
     public void OnButtonEvent_SubmitSignUp(GameObject buttonObject)
     {
+        Debug.Log("NAMNH: " + "signUpBtn");
+
         errorMsg.text = "";
 
         UISpinner spinner = buttonObject.GetComponentInChildren<UISpinner>(true);
 
         _attemptingSignUp = true;
         spinner?.gameObject.SetActive(true);
+
+        Debug.Log("NAMNH: " + usernameInput.text);
+        Debug.Log("NAMNH: " + emailInput.text);
+        Debug.Log("NAMNH: " + passwordInput.text);
 
         MMOManager.Instance.UserSignUp<UserAuthResponse>(usernameInput.text, emailInput.text, passwordInput.text,
             (response) =>

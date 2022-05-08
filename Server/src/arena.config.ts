@@ -3,6 +3,7 @@ import { monitor } from "@colyseus/monitor";
 import { MikroORM } from "@mikro-orm/core";
 import { RequestContext } from "@mikro-orm/core";
 import express from "express";
+const morgan = require('morgan');
 
 const logger = require("./helpers/logger");
 import { connect, DI } from "./config/database.config";
@@ -34,6 +35,8 @@ export default Arena({
         // Body parser - reads data from request body into json object
         app.use(express.json());
         app.use(express.urlencoded({ extended: true, limit: "10kb" }));
+
+        app.use(morgan('tiny'));
 
         //
         // MikroORM: it is important to create a RequestContext before registering routes that access the database.
