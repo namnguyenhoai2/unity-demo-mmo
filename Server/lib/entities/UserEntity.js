@@ -11,8 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.User = void 0;
 const core_1 = require("@mikro-orm/core");
-const Position_1 = require("../rooms/schema/Position");
-const Rotation_1 = require("../rooms/schema/Rotation");
+const Vectors_1 = require("../helpers/Vectors");
 const AvatarState_1 = require("../rooms/schema/AvatarState");
 const BaseEntity_1 = require("./BaseEntity");
 /**
@@ -59,11 +58,11 @@ __decorate([
 ], User.prototype, "prevGrid", void 0);
 __decorate([
     core_1.Property(),
-    __metadata("design:type", Position_1.Position)
+    __metadata("design:type", Vectors_1.Vector3)
 ], User.prototype, "position", void 0);
 __decorate([
     core_1.Property(),
-    __metadata("design:type", Rotation_1.Rotation)
+    __metadata("design:type", Vectors_1.Vector3)
 ], User.prototype, "rotation", void 0);
 __decorate([
     core_1.Property(),

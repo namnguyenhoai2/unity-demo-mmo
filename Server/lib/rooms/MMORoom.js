@@ -35,7 +35,6 @@ const database_config_1 = require("../config/database.config");
 const matchmakerHelper = __importStar(require("../helpers/matchmakerHelper"));
 const interactableObjectFactory = __importStar(require("../helpers/interactableObjectFactory"));
 const UserEntity_1 = require("../entities/UserEntity");
-const Position_1 = require("./schema/Position");
 const AvatarState_1 = require("./schema/AvatarState");
 const Vectors_1 = require("../helpers/Vectors");
 const logger = require("../helpers/logger");
@@ -54,29 +53,36 @@ class MMORoom extends colyseus_1.Room {
         }
         this.maxClients = 150;
         this.progress = options["progress"] || "0,0";
+        // Set initial state
         this.setState(new RoomState_1.RoomState());
+        // Register message handlers for messages from the client
         this.registerForMessages();
         // Set the frequency of the patch rate
-        this.setPatchRate(1000 / 20);
+        this.setPatchRate(50);
         // Set the Simulation Interval callback
         this.setSimulationInterval(dt => {
             this.state.serverTime += dt;
             this.checkObjectReset();
         });
     }
+    /** onAuth is called before onJoin */
     onAuth(client, options, request) {
         return __awaiter(this, void 0, void 0, function* () {
             const userRepo = database_config_1.DI.em.fork().getRepository(UserEntity_1.User);
-            // Check for a user with a pending sessionId
+            // Check for a user with a pending sessionId that matches this client's sessionId
             let user = yield userRepo.findOne({ pendingSessionId: client.sessionId });
             if (user) {
+                // A user with the pendingSessionId does exist
                 // Update user; clear their pending session Id and update their active session Id
                 user.activeSessionId = client.sessionId;
                 user.pendingSessionId = "";
+                // Save the user changes to the database
                 yield userRepo.flush();
+                // Returning the user object equates to returning a "truthy" value that allows the onJoin function to continue
                 return user;
             }
             else {
+                // No user object was found with the pendingSessionId like we expected
                 logger.error(`On Auth - No user found for session Id - ${client.sessionId}`);
                 throw new colyseus_1.ServerError(400, "Bad session!");
             }
@@ -84,7 +90,7 @@ class MMORoom extends colyseus_1.Room {
     }
     onJoin(client, options, auth) {
         return __awaiter(this, void 0, void 0, function* () {
-            logger.info(`Client joined!- ${client.sessionId} ***`);
+            // Create a new instance of NetworkedEntityState for this client and assign initial state values
             let newNetworkedUser = new RoomState_1.NetworkedEntityState().assign({
                 id: client.id,
                 timestamp: this.state.serverTime,
@@ -113,7 +119,11 @@ class MMORoom extends colyseus_1.Room {
                     hatChoice: auth.avatar.hatChoice,
                 });
             }
+            // Sets the coin value of the networked user defaulting to 0 if none exists
             newNetworkedUser.coins = auth.coins || 0;
+            // Add the networked user to the collection; 
+            // This will trigger the OnAdd event of the state's "networkedUsers" collection on the client
+            // and the client will spawn a character object for this use.
             this.state.networkedUsers.set(client.id, newNetworkedUser);
         });
     }
@@ -121,13 +131,14 @@ class MMORoom extends colyseus_1.Room {
     onLeave(client, consented) {
         return __awaiter(this, void 0, void 0, function* () {
             const userRepo = database_config_1.DI.em.fork().getRepository(UserEntity_1.User);
-            logger.info(`*** User Leave - ${client.id} ***`);
+            // Find the user object in the database by their activeSessionId
             let user = yield userRepo.findOne({ activeSessionId: client.sessionId });
-            // Clear the user's active session
             if (user) {
+                // Clear the user's active session
                 user.activeSessionId = "";
                 user.position = this.state.getUserPosition(client.sessionId);
                 user.rotation = this.state.getUserRotation(client.sessionId);
+                // Save the user's changes to the database
                 yield userRepo.flush();
             }
             try {
@@ -154,10 +165,11 @@ class MMORoom extends colyseus_1.Room {
     }
     /**
      * Callback for the "entityUpdate" message from the client to update an entity
-     * @param {*} clientID
-     * @param {*} data
+     * @param {*} clientID The sessionId of the client we want to update
+     * @param {*} data The data containing the data we want to update the newtworkedUser with
      */
     onEntityUpdate(clientID, data) {
+        // Assumes that index 0 is going to be the sessionId of the user
         if (this.state.networkedUsers.has(`${data[0]}`) === false) {
             logger.info(`Attempted to update client with id ${data[0]} but room state has no record of it`);
             return;
@@ -175,22 +187,29 @@ class MMORoom extends colyseus_1.Room {
         }
         stateToUpdate.timestamp = parseFloat(this.state.serverTime.toString());
     }
+    /**
+     * Message handler for when a user is moving between rooms.
+     * @param client Client for the user moving between rooms
+     * @param gridDelta The delta values of the grid change.
+     * @param position The player's position they should be at in the next room.
+     * @returns
+     */
     onGridUpdate(client, gridDelta, position) {
         return __awaiter(this, void 0, void 0, function* () {
             const userRepo = database_config_1.DI.em.fork().getRepository(UserEntity_1.User);
             // Check that the client is in the room
-            if (this.state.networkedUsers.has(client.sessionId) == false) {
+            if (this.state.networkedUsers.has(client.sessionId) === false) {
                 logger.error(`*** On Grid Update -  User not in room - can't update their grid! - ${client.sessionId} ***`);
                 return;
             }
             // Grid change must be greater that 0 in any direction
-            if (gridDelta.x == 0 && gridDelta.y == 0) {
+            if (gridDelta.x === 0 && gridDelta.y === 0) {
                 logger.error(`*** On Grid Update -  No grid change detected! ***`);
                 return;
             }
             // Get the user object by the active session Id
             let user = yield userRepo.findOne({ activeSessionId: client.sessionId });
-            if (user == null) {
+            if (!user) {
                 logger.error(`*** On Grid Update - Error finding player! - ${client.sessionId} ***`);
                 return;
             }
@@ -200,15 +219,14 @@ class MMORoom extends colyseus_1.Room {
             const currentX = Number(currentGrid[0]);
             const currentY = Number(currentGrid[1]);
             const newGrid = new Vectors_1.Vector2(currentX + gridDelta.x, currentY + gridDelta.y);
-            //logger.silly(`*** On Grid Update - calculate new grid = ${newGrid[0]},${newGrid[1]} ***`);
             if (isNaN(newGrid.x) || isNaN(newGrid.y)) {
                 logger.error(`*** On Grid Update - Error calculating new grid position! X = ${newGrid.x}  Y = ${newGrid.y} ***`);
                 return;
             }
             const newGridString = `${newGrid.x},${newGrid.y}`;
-            // Get seat reservation for player's new grid
+            // Get seat reservation for the player's new grid
             const seatReservation = yield matchmakerHelper.matchMakeToRoom("lobby_room", newGridString);
-            if (seatReservation == null) {
+            if (!seatReservation) {
                 logger.error(`*** On Grid Update - Error getting seat reservation at grid \"${newGridString}\" ***`);
                 return;
             }
@@ -216,19 +234,21 @@ class MMORoom extends colyseus_1.Room {
             user.progress = newGridString;
             user.prevGrid = progress;
             user.pendingSessionId = seatReservation.sessionId;
-            user.position = new Position_1.Position().assign(position);
+            user.position = new Vectors_1.Vector3(position.x, position.y, position.z);
             user.rotation = this.state.getUserRotation(client.sessionId);
             user.updatedAt = new Date();
+            // Save the user's changes to the database
             yield userRepo.flush();
             const gridUpdate = {
                 newGridPosition: newGrid,
                 prevGridPosition: new Vectors_1.Vector2(currentX, currentY),
                 seatReservation
             };
-            // Send client new seat reservation and grid data
+            // Send client the new seat reservation and grid data
             client.send("movedToGrid", gridUpdate);
         });
     }
+    /** Register the message handlers for messages that come from the client */
     registerForMessages() {
         // Set the callback for the "entityUpdate" message
         this.onMessage("entityUpdate", (client, entityUpdateArray) => {
@@ -240,7 +260,7 @@ class MMORoom extends colyseus_1.Room {
             this.handleObjectInteraction(client, objectInfoArray);
         });
         this.onMessage("transitionArea", (client, transitionData) => {
-            if (transitionData == null || transitionData.length < 2) {
+            if (!transitionData || transitionData.length < 2) {
                 logger.error(`*** Grid Change Error! Missing data for grid change! ***`);
                 return;
             }
@@ -254,7 +274,7 @@ class MMORoom extends colyseus_1.Room {
         return __awaiter(this, void 0, void 0, function* () {
             const userRepo = database_config_1.DI.em.fork().getRepository(UserEntity_1.User);
             //If the server is not yet aware of this item, lets change that
-            if (this.state.interactableItems.has(objectInfo[0]) == false) {
+            if (this.state.interactableItems.has(objectInfo[0]) === false) {
                 let interactable = interactableObjectFactory.getStateForType(objectInfo[1]);
                 interactable.assign({
                     id: objectInfo[0],

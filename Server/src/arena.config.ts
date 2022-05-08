@@ -8,6 +8,7 @@ const morgan = require('morgan');
 const logger = require("./helpers/logger");
 import { connect, DI } from "./config/database.config";
 import userRoutes from "./routes/userRoutes";
+const socialRoutes = require("@colyseus/social/express").default;
 
 /**
  * Import your Room files
@@ -43,6 +44,10 @@ export default Arena({
         // See => https://mikro-orm.io/docs/identity-map/
         //
         app.use((req, res, next) => RequestContext.create(DI.orm.em, next));
+
+        // namnh add social
+        app.use("/", socialRoutes);
+
 
         // Register routes for our simple user auth
         app.use("/users", userRoutes);

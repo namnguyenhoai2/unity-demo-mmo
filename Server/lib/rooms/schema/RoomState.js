@@ -12,7 +12,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ChatRoomState = exports.ChatQueue = exports.ChatMessage = exports.RoomState = exports.InteractableState = exports.NetworkedEntityState = void 0;
 const schema_1 = require("@colyseus/schema");
 const AvatarState_1 = require("./AvatarState");
-// TODO: replace individual position and rotation components with Position and Rotation schemas
 class NetworkedEntityState extends schema_1.Schema {
     constructor() {
         super(...arguments);

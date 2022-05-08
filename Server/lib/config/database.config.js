@@ -15,14 +15,18 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.connect = exports.DI = void 0;
 const core_1 = require("@mikro-orm/core");
 const mikro_orm_config_1 = __importDefault(require("./mikro-orm.config"));
-const UserEntity_1 = require("../entities/UserEntity");
+/**
+ * This demo makes use of Mikro ORM to manage the database connection and CRUD operations of our User entity (https://mikro-orm.io/)
+ */
 exports.DI = {};
+/**
+ * Initiate connection to the database
+ */
 function connect() {
     return __awaiter(this, void 0, void 0, function* () {
         mikro_orm_config_1.default.clientUrl = process.env.DEMO_DATABASE;
         exports.DI.orm = yield core_1.MikroORM.init(mikro_orm_config_1.default);
         exports.DI.em = exports.DI.orm.em;
-        exports.DI.userRepository = exports.DI.orm.em.getRepository(UserEntity_1.User);
     });
 }
 exports.connect = connect;

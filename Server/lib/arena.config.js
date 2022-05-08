@@ -16,9 +16,11 @@ const arena_1 = __importDefault(require("@colyseus/arena"));
 const monitor_1 = require("@colyseus/monitor");
 const core_1 = require("@mikro-orm/core");
 const express_1 = __importDefault(require("express"));
+const morgan = require('morgan');
 const logger = require("./helpers/logger");
 const database_config_1 = require("./config/database.config");
 const userRoutes_1 = __importDefault(require("./routes/userRoutes"));
+const socialRoutes = require("@colyseus/social/express").default;
 /**
  * Import your Room files
  */
@@ -31,7 +33,7 @@ exports.default = arena_1.default({
          * Define your room handlers:
          */
         gameServer.define('chat_room', ChatRoom_1.ChatRoom).filterBy(["roomID"]);
-        gameServer.define('lobby_room', MMORoom_1.MMORoom).filterBy(["progress"]);
+        gameServer.define('lobby_room', MMORoom_1.MMORoom).filterBy(["progress"]); // Filter room by "progress" (which grid we're wanting to join EX: -1x2)
     },
     initializeExpress: (app) => {
         /**
@@ -40,6 +42,7 @@ exports.default = arena_1.default({
         // Body parser - reads data from request body into json object
         app.use(express_1.default.json());
         app.use(express_1.default.urlencoded({ extended: true, limit: "10kb" }));
+        app.use(morgan('tiny'));
         //
         // MikroORM: it is important to create a RequestContext before registering routes that access the database.
         // See => https://mikro-orm.io/docs/identity-map/

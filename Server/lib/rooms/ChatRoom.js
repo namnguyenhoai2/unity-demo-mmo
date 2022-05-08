@@ -34,7 +34,7 @@ class ChatRoom extends colyseus_1.Room {
         this.setSimulationInterval(dt => {
             this.serverTime += dt;
             this.pruneMessages();
-            if (this.state == null) {
+            if (!this.state) {
                 console.log("We have no state!");
             }
         });
@@ -49,6 +49,7 @@ class ChatRoom extends colyseus_1.Room {
     // Callback when a client has left the room
     onLeave(client, consented) {
         return __awaiter(this, void 0, void 0, function* () {
+            logger.info(`***Chat User Leave - ${client.id} ***`);
             this.state.chatQueue.delete(client.sessionId);
         });
     }
@@ -74,7 +75,7 @@ class ChatRoom extends colyseus_1.Room {
         let modifiedTimestamp = newChatMessage.timestamp;
         let chatQueue = this.state.chatQueue.get(client.id);
         chatQueue.chatMessages.forEach((chatMessage) => {
-            if (chatMessage.senderID == client.id) {
+            if (chatMessage.senderID === client.id) {
                 //If the timestamp for this message is too close to the desired new timestamp, make it later
                 let diff = modifiedTimestamp - chatMessage.timestamp;
                 if (diff < this.messageLifetime) {
