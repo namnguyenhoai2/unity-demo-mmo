@@ -99,6 +99,8 @@ public class CreateUserMenu : MonoBehaviour
     /// </summary>
     private void ShowLogIn()
     {
+        Debug.Log("NAMNH: " + "ShowLogIn");
+
         optionsView.SetActive(false);
         loginView.SetActive(true);
         backBtn.SetActive(true);
@@ -165,6 +167,8 @@ public class CreateUserMenu : MonoBehaviour
     /// <param name="buttonObject">The game object the button component is on.</param>
     public void OnButtonEvent_SubmitLogIn(GameObject buttonObject)
     {
+        Debug.Log("NAMNH: " + "OnButtonEvent_SubmitLogIn");
+
         MMOPlayerPrefs.RememberMe = rememberMe.isOn;
 
         MMOPlayerPrefs.Email = rememberMe.isOn ? logInEmailInput.text : "";
@@ -246,6 +250,8 @@ public class CreateUserMenu : MonoBehaviour
 
     public void UpdateErrorText(string msg)
     {
+        Debug.Log("NAMNH: " + "UpdateErrorText" + msg);
+
         logInErrorMsg.text = errorMsg.text = msg;
     }
 

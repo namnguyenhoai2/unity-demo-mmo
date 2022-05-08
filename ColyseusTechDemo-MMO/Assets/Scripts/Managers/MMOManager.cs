@@ -381,6 +381,7 @@ public class MMOManager : ColyseusManager<MMOManager>
     {
         string fullURL = $"{_colyseusSettings.WebRequestEndpoint}/{url}";
 
+        Debug.Log(fullURL);
         UnityWebRequest request = null;
 
         switch (method)
@@ -400,6 +401,8 @@ public class MMOManager : ColyseusManager<MMOManager>
 
         if (request == null)
         {
+            Debug.LogError(fullURL);
+
             onComplete?.Invoke(new RequestResponse() { error = true, output = $"Error making web request!" });
             yield break;
         }
@@ -421,9 +424,15 @@ public class MMOManager : ColyseusManager<MMOManager>
 
             response.rawResponse = request.downloadHandler.text;
 
+            Debug.Log(response);
+
+            Debug.Log(request.downloadHandler.text);
+
         }
         catch (System.Exception err)
         {
+            Debug.LogError(err);
+
             response = new RequestResponse() { error = true, output = $"{err.Message}" };
         }
 

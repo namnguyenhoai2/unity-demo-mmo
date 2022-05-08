@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   colyseusServerAddress: localhost
   colyseusServerPort: 2567
-  useSecureProtocol: 1
+  useSecureProtocol: 0
   _requestHeaders:
   - name: Content-Type
     value: application/json
